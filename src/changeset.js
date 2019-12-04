@@ -8,16 +8,31 @@ export const defineChangeset = (mods = []) => {
   return changeset
 }
 
+const toString = v => String(v)
+const ident = v => v
 export const label = label => config => ((config.label = label), config)
-const typeTypes = {text: 'text', number: 'number', float: 'number'}
-const typeValues = {text: '', number: 0, float: 0.0}
-const typeFromValues = {text: v => v, number: v => parseInt(v, 10), float: v => parseFloat(v, 10)}
+const typeTypes = {text: 'text', number: 'number', float: 'number', boolean: 'boolean'}
+const typeValues = {text: '', number: 0, float: 0.0, boolean: false}
+const typeToValues = {text: toString, number: toString, float: toString, boolean: ident}
+const typeFromValues = {
+  text: v => v,
+  number: v => parseInt(v, 10),
+  float: v => parseFloat(v, 10),
+  boolean: ident,
+}
+
+const fallback = (args = []) => {
+  if (!args.length) return null
+  const [head, ...tail] = args
+  if (head != null) return head
+  return fallback(tail)
+}
 
 export const type = (type, opts = {}) => config => {
   config.type = typeTypes[type] || type
-  config.value = opts.value || typeValues[type]
-  config.toInputValue = opts.toInputValue || (v => String(v))
-  config.fromInputValue = opts.fromInputValue || typeFromValues[type] || (v => v)
+  config.value = opts.value != null ? opts.value : typeValues[type]
+  config.toInputValue = opts.toInputValue || typeToValues[type] || toString
+  config.fromInputValue = opts.fromInputValue || typeFromValues[type] || ident
   return config
 }
 
