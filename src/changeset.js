@@ -3,8 +3,7 @@ export const defineChangeset = (mods = []) => {
   for (let field of changeset.fields) {
     changeset.data[field] = changeset.config[field].value
   }
-  changeset.values = {...changeset.data}
-  changeset = validateChangeset(changeset)
+  changeset = parseChangeset(changeset)
   return changeset
 }
 
@@ -70,6 +69,31 @@ export const field = (key, mods = []) => node => {
 
 const count = (errors = {}) => Object.keys(errors).length
 
+const apply = (value, fns = []) => fns.reduce((value, fn) => fn(value), value)
+
+function parseChangeset(changeset) {
+  return apply(changeset, [scrubChangeset, setValues, setChangedFields, validateChangeset])
+}
+
+function scrubChangeset(cs) {
+  for (let key of Object.keys(cs.changes)) {
+    if (cs.data[key] === cs.changes[key]) {
+      delete cs.changes[key]
+    }
+  }
+  return cs
+}
+
+function setValues(cs) {
+  cs.values = {...cs.data, ...cs.changes}
+  return cs
+}
+
+function setChangedFields(cs) {
+  cs.changedFields = new Set(Object.keys(cs.changes))
+  return cs
+}
+
 function validateChangeset(cs) {
   let data = {}
   let changes = {}
@@ -105,16 +129,14 @@ export const change = (changeset, changes = {}) => {
     (cx, key) => ({...cx, [key]: changes[key]}),
     changeset.changes
   )
-  changeset.values = {...changeset.data, ...changeset.changes}
-  changeset = validateChangeset(changeset)
+  changeset = parseChangeset(changeset)
   return new Changeset(changeset)
 }
 
 export const clear = changeset => {
   changeset = clone(changeset)
   changeset.changes = {}
-  changeset.values = changeset.data
-  changeset = validateChangeset(changeset)
+  changeset = parseChangeset(changeset)
   return changeset
 }
 
@@ -122,8 +144,14 @@ export const commit = changeset => {
   changeset = clone(changeset)
   changeset.data = {...changeset.data, ...changeset.changes}
   changeset.changes = {}
-  changeset.values = {...changeset.data}
-  changeset = validateChangeset(changeset)
+  changeset = parseChangeset(changeset)
+  return changeset
+}
+
+export const updateData = (changeset, data = {}) => {
+  changeset = clone(changeset)
+  changeset.data = {...changeset.data, ...data}
+  changeset = parseChangeset(changeset)
   return changeset
 }
 
@@ -133,6 +161,7 @@ function clone(changeset) {
 
 function Changeset(changeset = {}) {
   this.fields = changeset.fields || new Set()
+  this.changedFields = changeset.changedFields || new Set()
   this.config = changeset.config || {}
   this.data = changeset.data || {}
   this.changes = changeset.changes || {}

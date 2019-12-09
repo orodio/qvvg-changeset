@@ -6,6 +6,7 @@ export {
   type,
   clear,
   commit,
+  updateData,
   validation,
   validate,
   required,

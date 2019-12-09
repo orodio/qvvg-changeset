@@ -9,6 +9,7 @@ import {
   validation,
   validate,
   required,
+  updateData,
 } from './changeset.js'
 
 const FIELDS = new Set(['firstName', 'lastName', 'age', 'price', 'town'])
@@ -125,27 +126,33 @@ test('change', () => {
   // Run expects after all change happen to disprove mutation
   expect(def.data).toEqual({firstName: '', lastName: '', age: 0})
   expect(def.changes).toEqual({})
+  expect(def.changedFields.size).toEqual(0)
   expect(def.values).toEqual({firstName: '', lastName: '', age: 0})
 
   expect(cx1.data).toEqual({firstName: '', lastName: '', age: 0})
   expect(cx1.changes).toEqual({firstName: 'Bob'})
+  expect(cx1.changedFields.size).toEqual(1)
   expect(cx1.values).toEqual({firstName: 'Bob', lastName: '', age: 0})
 
   expect(cx2.data).toEqual({firstName: '', lastName: '', age: 0})
   expect(cx2.changes).toEqual({firstName: 'Bob', lastName: 'Builder'})
+  expect(cx2.changedFields.size).toEqual(2)
   expect(cx2.values).toEqual({firstName: 'Bob', lastName: 'Builder', age: 0})
 
   expect(cx3.data).toEqual({firstName: '', lastName: '', age: 0})
   expect(cx3.changes).toEqual({firstName: 'Bob', lastName: 'Builder', age: 25})
+  expect(cx3.changedFields.size).toEqual(3)
   expect(cx3.values).toEqual({firstName: 'Bob', lastName: 'Builder', age: 25})
 
   expect(cx4.data).toEqual(def.data)
   expect(cx4.changes).toEqual(def.changes)
+  expect(cx4.changedFields.size).toEqual(0)
   expect(cx4.values).toEqual(def.values)
 
   expect(cx5.data).toEqual(cx3.values)
   expect(cx5.changes).toEqual(def.changes)
   expect(cx5.values).toEqual(cx3.values)
+  expect(cx5.changedFields.size).toEqual(0)
 })
 
 describe('validation', () => {
@@ -201,4 +208,27 @@ describe('validation', () => {
     {},
     {b: 'is required', d: 'must be greater than 5', e: 'NO!'}
   )
+})
+
+describe('scrub', () => {
+  const def = defineChangeset([field('a'), field('b'), field('c')])
+
+  const cx1 = commit(change(def, {a: 'foo', b: 'bar', c: 'baz'}))
+  const cx2 = change(cx1, {a: 'foo', b: 'bar', c: 'baz'})
+
+  expect(cx1.data).toEqual(cx2.data)
+  expect(cx1.changes).toEqual(cx2.changes)
+  expect(cx1.values).toEqual(cx2.values)
+})
+
+describe('updateData', () => {
+  const def = defineChangeset([field('a'), field('b'), field('c')])
+
+  const cx1 = commit(change(def, {a: 'foo', b: 'bar', c: 'baz'}))
+  const cx2 = change(cx1, {a: 'a', b: 'b'})
+  const cx3 = updateData(cx2, {a: 'a'})
+
+  expect(cx3.data).toEqual({a: 'a', b: 'bar', c: 'baz'})
+  expect(cx3.changes).toEqual({b: 'b'})
+  expect(cx3.values).toEqual({a: 'a', b: 'b', c: 'baz'})
 })
