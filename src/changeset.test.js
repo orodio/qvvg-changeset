@@ -170,9 +170,10 @@ describe('validation', () => {
         },
       ]),
     ]),
+    field('f', [type('text', {value: null}), validation([required()])]),
   ])
 
-  const cx1 = change(def, {a: 'foo', b: 'rawr', c: 'pew', d: 9, e: 9})
+  const cx1 = change(def, {a: 'foo', b: 'rawr', c: 'pew', d: 9, e: 9, f: '10'})
   const cx2 = commit(cx1)
   const cx3 = clear(cx1)
 
@@ -195,18 +196,18 @@ describe('validation', () => {
   testErrors(
     'initial',
     def,
-    {b: 'is required', d: 'must be greater than 5', e: 'NO!'},
+    {b: 'is required', d: 'must be greater than 5', e: 'NO!', f: 'is required'},
     {},
-    {b: 'is required', d: 'must be greater than 5', e: 'NO!'}
+    {b: 'is required', d: 'must be greater than 5', e: 'NO!', f: 'is required'}
   )
-  testErrors('cx1', cx1, {b: 'is required', d: 'must be greater than 5', e: 'NO!'}, {}, {})
-  testErrors('cx2', cx2, {}, {}, {})
+  testErrors('cx1', cx1, {b: 'is required', d: 'must be greater than 5', e: 'NO!', f: 'is required'}, {}, {})
+  testErrors('cx2', cx2, {}, {}, {}, {})
   testErrors(
     'cx3',
     cx3,
-    {b: 'is required', d: 'must be greater than 5', e: 'NO!'},
+    {b: 'is required', d: 'must be greater than 5', e: 'NO!', f: 'is required'},
     {},
-    {b: 'is required', d: 'must be greater than 5', e: 'NO!'}
+    {b: 'is required', d: 'must be greater than 5', e: 'NO!', f: 'is required'}
   )
 })
 

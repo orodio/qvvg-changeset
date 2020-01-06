@@ -49,7 +49,7 @@ export const validation = (fns = []) => config => {
 }
 
 export const required = () => ({Good, Bad, toInputValue}, value) => {
-  if (toInputValue(value).length <= 0) return Bad(value, 'is required')
+  if (toInputValue(value).length <= 0 || value == null) return Bad(value, 'is required')
   return Good(value)
 }
 
